@@ -25,20 +25,12 @@ class RunStates(StatesGroup):
 
 
 ######################################
-##		Basic message handlers		##
+##      Basic message handlers      ##
 ######################################
 
 @dp.message_handler(commands=['start'], state=None)
 async def handler_command_start(message: types.Message):
     
-  #   msg = \
-		# 'Greetings1\n' + \
-		# 'I\'m summoned to this world to help you transfer styles from one picture to another1 (i know you got them c;)\n' + \
-		# 'So here are the magic words to communicate w/ me:\n' + \
-		# '/run - get instructions to do style transfer\n' + \
-		# '/stopit - return to the starting point\n' + \
-		# '/help - about me & procedure\n'
-
 	msg = \
 		'''
 		Greetings1
@@ -140,7 +132,7 @@ async def handler_style(message: types.Message, state: FSMContext):
 
 
 ######################################
-##			Style transfer			##
+##          Style transfer          ##
 ######################################
 
 async def get_output(input_data, message: types.Message):
