@@ -1,4 +1,4 @@
-# Neural Style Transfer
+## Neural Style Transfer
 
 Platform: Telegram<br>
 Framework: aiogram<br>
