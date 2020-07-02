@@ -2,18 +2,23 @@ from PIL import Image
 import torch
 import torchvision.transforms as transforms
 
-def tensor2PIL(tensor):
+
+def tensor2PIL(tensor, mean, std):
     image = tensor.cpu().clone()
     image = image.squeeze(0)
+    image = image * std.view(-1, 1, 1) + mean.view(-1, 1, 1)
+    image = torch.clamp(image, 0, 1)  
     image = transforms.ToPILImage()(image)
     return image
 
 
 class Image_loader():
     def __init__(self, content_path_list, style_path_list,
-                 img_size, device, print_flg):
+                 img_size, device, mean, std, print_flg):
                
         self.device = device
+        self.mean = mean
+        self.std = std
         self.content_path_list = content_path_list
         self.style_path_list = style_path_list
         self.content_sizes = []
@@ -47,6 +52,7 @@ class Image_loader():
             self.content_sizes.append(image.numpy().shape[-2:])
             
             image = torch.FloatTensor(image)
+            image = self.normalize(image)
             self.content_imgs.append(image)
                     
         # default
@@ -56,7 +62,9 @@ class Image_loader():
         # load style images
         self.load_style_images(self.style_path_list)
         
-    def normalize(self, img, mean, std):
+    def normalize(self, img):
+        mean = self.mean.view(-1, 1, 1)
+        std = self.std.view(-1, 1, 1)
         return (img - mean) / std
         
     def get_content(self):
@@ -73,7 +81,7 @@ class Image_loader():
     def load_style_images(self, path_list):
         
         style_load = transforms.Compose([
-            transforms.Resize(self.curr_content_size),
+            transforms.Resize(self.curr_content_size, Image.LANCZOS),
             transforms.ToTensor()])
         
         self.style_imgs = []
@@ -81,4 +89,5 @@ class Image_loader():
             
             image = Image.open(p)
             image = style_load(image).unsqueeze(0)
+            image = self.normalize(image)
             self.style_imgs.append(image)

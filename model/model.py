@@ -5,6 +5,7 @@ from PIL import Image
 
 import torch
 import torch.nn as nn
+from torch.nn import Conv2d, ReLU, AvgPool2d, Sequential
 import torch.nn.functional as F
 import torch.optim as optim
 import torchvision.transforms as transforms
@@ -18,20 +19,19 @@ from model.losses import *
 IMG_SIZE = 300
 ITER_NUM = 500
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-STYLE_WEIGHT = 1e7
+STYLE_WEIGHT = 1e5
 TV_STYLE_COEFF = 5e-12
 VGG19_W_PATH = 'vgg19_conv1_1-relu4_2.pt'
 LAYER_NAMES = ['conv1_1', 'relu1_1', 'conv1_2', 'relu1_2', 'pool1',
                'conv2_1', 'relu2_1', 'conv2_2', 'relu2_2', 'pool2',
-               'conv3_1', 'relu3_1', 'conv3_2', 'relu3_2', 'conv3_3',
-                'relu3_3', 'conv3_4', 'relu3_4', 'pool3',
-               'conv4_1', 'relu4_1', 'conv4_2', 'relu4_2', 'conv4_3',
-                'relu4_3', 'conv4_4', 'relu4_4', 'pool4',
-               'conv5_1', 'relu5_1', 'conv5_2', 'relu5_2', 'conv5_3',
-                'relu5_3', 'conv5_4', 'relu5_4', 'pool5']
+               'conv3_1', 'relu3_1', 'conv3_2', 'relu3_2',
+               'conv3_3', 'relu3_3', 'conv3_4', 'relu3_4', 'pool3',
+               'conv4_1', 'relu4_1', 'conv4_2', 'relu4_2']
 CONTENT_LAYERS = ['relu4_2']
 STYLE_LAYERS = ['relu1_2', 'relu2_2', 'relu3_3', 'relu4_2']
 STYLE_LOSS_WEIGHTS = np.array([0.5,.4,.3,.2]) / 1.4
+VGG_MEAN = torch.Tensor([0.485, 0.456, 0.406])
+VGG_STD = torch.Tensor([0.229, 0.224, 0.225])
 
 class Model_vgg19_cut(nn.Module):
 
@@ -172,9 +172,9 @@ def run_style_transfer(image_loader,
             run[0] += 1
             if (run[0] % 100 == 0) and (print_flg):
                 
-                print("Iter {}:".format(run[0]))
-                print('Style Loss : {:4f} Content Loss : {:4f}'.format(
-                    style_score.item(), content_score.item()))
+                print('Iter {}:'.format(run[0]))
+                print('Style Loss : {:.4f} Content Loss: {:.4f} TV Loss: {:.4f}'\
+                      .format(style_score.item(), content_score.item(), tv_score.item()))
                 print('{} sec'.format(int(time.time()-start_time)))
                 print()
 
@@ -190,7 +190,8 @@ def run_style_transfer(image_loader,
 
 async def apply_NST(content_path, style_path, save_path, style_weight):
 
-	image_loader = Image_loader([content_path], [style_path], IMG_SIZE, DEVICE, True)
+	image_loader = Image_loader([content_path], [style_path],
+								IMG_SIZE, DEVICE, VGG_MEAN, VGG_STD, True)
 	input_img = image_loader.get_content()
 
 	output_img = run_style_transfer(image_loader=image_loader,
@@ -217,7 +218,7 @@ if __name__ == '__main__':
     test_style_path = '../test_style.jpg'
     test_output_path = '../test_result.jpg'
     image_loader = Image_loader([test_content_path], [test_style_path],
-    							IMG_SIZE, DEVICE, True)
+    							IMG_SIZE, DEVICE, VGG_MEAN, VGG_STD, True)
     input_img = image_loader.get_content().clone()
     
     output_img = run_style_transfer(image_loader=image_loader,
@@ -232,5 +233,5 @@ if __name__ == '__main__':
                                     tv_weight=STYLE_WEIGHT*TV_STYLE_COEFF,
                                     print_flg=True)
 
-    tensor2PIL(output_img).save(test_output_path)
+    tensor2PIL(output_img, VGG_MEAN, VGG_STD).save(test_output_path)
 
