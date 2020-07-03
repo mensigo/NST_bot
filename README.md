@@ -2,10 +2,10 @@
 
 Platform: Telegram @LonAloneBot<br>
 Framework: aiogram<br>
-Algorithm: 1) standard, vgg-19 based, cut version
-              https://arxiv.org/abs/1508.06576
-           2) cycle-gan: junyanz/pytorch-CycleGAN-and-pix2pix
-              https://arxiv.org/pdf/1703.10593.pdf
+Algorithm: 1) standard, vgg-19 based, cut version<br>
+              https://arxiv.org/abs/1508.06576<br>
+           2) cycle-gan: junyanz/pytorch-CycleGAN-and-pix2pix<br>
+              https://arxiv.org/pdf/1703.10593.pdf<br>
 Commands:
 
 /run - get instructions to do style transfer (your style):<br>
