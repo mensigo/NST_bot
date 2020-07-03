@@ -17,11 +17,12 @@ from model.losses import *
 
 # basic constaints
 IMG_SIZE = 300
-ITER_NUM = 500
+ITER_NUM = 300 
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 STYLE_WEIGHT = 1e5
+TV_WEIGHT = 5e-6
 TV_STYLE_COEFF = 5e-12
-VGG19_W_PATH = 'vgg19_conv1_1-relu4_2.pt'
+VGG19_W_PATH = 'model/vgg19_conv1_1-relu4_2.pt'
 LAYER_NAMES = ['conv1_1', 'relu1_1', 'conv1_2', 'relu1_2', 'pool1',
                'conv2_1', 'relu2_1', 'conv2_2', 'relu2_2', 'pool2',
                'conv3_1', 'relu3_1', 'conv3_2', 'relu3_2',
@@ -203,10 +204,10 @@ async def apply_NST(content_path, style_path, save_path, style_weight):
 	                                style_loss_weights=STYLE_LOSS_WEIGHTS,
 		                            style_weight=style_weight,
 		                            content_weight=1,
-		                            tv_weight=style_weight*TV_STYLE_COEFF,
+		                            tv_weight=TV_WEIGHT
 		                            print_flg=True)
 
-	tensor2PIL(output_img).save(save_path)
+	tensor2PIL(output_img, VGG_MEAN, VGG_STD).save(save_path)
 
 
 if __name__ == '__main__':

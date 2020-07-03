@@ -22,6 +22,7 @@ class RunStates(StatesGroup):
     style = State()
     intensity = State()
     waiting = State()
+    run_same = State()
 
 
 ######################################
@@ -66,6 +67,9 @@ async def handler_command_help(message: types.Message):
 		- if you change your mind and want to start over (at any time),
 		  enter /stopit
 
+		ps. I can\'t handle pics with the largest side bigger than 300 pix
+			(it will be resized automatically)
+
 		[made by @mensigo]
 		'''.replace('\t','')
 	await message.answer(msg)
@@ -76,18 +80,14 @@ async def handler_command_stopit(message: types.Message, state: FSMContext):
 
 	logging.info('State is reset.')
 	await state.finish()
-	await message.answer('All right, let\'s try again from the very\nbeginning. Enter /run')
+	await message.answer('All right, let\'s try again from the very beginning. \nEnter /run',
+						 reply_markup=types.ReplyKeyboardRemove())
 
 
 @dp.message_handler(commands=['run'], state=None)
 async def handler_command_run(message: types.Message):
 
-	msg = \
-		'''	
-		First, give me content image to transfer style on.
-		ps. I can\'t handle pics with the largest side bigger
-		       than 300 pix yet (it will be resized automatically)
-		'''.replace('\t','')
+	msg = 'First, give me content image to transfer style on.'
 	logging.info('Content state is set.')
 	await RunStates.content.set()
 	await message.answer(msg)
@@ -147,10 +147,7 @@ async def get_output(input_data, message: types.Message):
 	await apply_NST(content_path, style_path, output_path, input_data['style_w'])
 
 	with open(output_path, 'rb') as output_img:
-		await message.answer_photo(output_img, caption='Ta-daa1\nYou can /run again, if you want c;')
-
-	for p in [content_path, style_path, output_path]:
-		os.remove(p)
+		await message.answer_photo(output_img, caption='Ta-daa1\n')
 
 
 @dp.message_handler(lambda message: message.text not in ['Light', 'Medium', 'Hard'],
@@ -178,17 +175,64 @@ async def handler_intensity(message: types.Message, state: FSMContext):
 	markup = types.ReplyKeyboardRemove()
 	await state.update_data(style_w=style_w)
 	
-
 	logging.info('Waiting state is set.')
 	await RunStates.waiting.set()
 	await message.answer('All right. Now wait a minute..')
 	await types.ChatActions.typing()
 
-
 	input_data = await state.get_data()
 	await get_output(input_data, message)
-	logging.info('Finished.')
-	await state.finish()
+
+	# run with same photos
+	
+	logging.info('Run_same state is set.')
+	await RunStates.run_same.set()
+	markup = types.ReplyKeyboardMarkup(resize_keyboard=True,
+									   selective=True,
+									   one_time_keyboard=True)
+	markup.add('Yes!', 'Nope.')
+	await message.answer('Try another intensity with same images?',
+						 reply_markup=markup)
+
+
+@dp.message_handler(lambda message: message.text not in ['Yes!', 'Nope.'],
+					state=RunStates.run_same)
+async def handler_run_same_invalid(message: types.Message, state: FSMContext):
+
+	return await message.reply("Wrong option.\nChoose from the keyboard below.")
+
+
+@dp.message_handler(state=RunStates.run_same)
+async def handler_run_same(message: types.Message, state: FSMContext):
+
+	if (message.text == 'Yes!'):
+
+		# change intensity
+
+		logging.info('Intensity state is set.')
+		await RunStates.intensity.set()
+		markup = types.ReplyKeyboardMarkup(resize_keyboard=True,
+										   selective=True,
+										   one_time_keyboard=True)
+		markup.add('Light', 'Medium', 'Hard')
+		await message.answer('Choose new intensity.', reply_markup=markup)
+
+	else:
+
+		# finish
+
+		logging.info('Finished.')
+		await state.finish()
+		await message.answer('Ok, you can /run whenever you want c;',
+							 reply_markup=types.ReplyKeyboardRemove())
+
+		user_id = message.from_user.id
+		content_path = str(user_id) + '_content.jpg'
+		style_path = str(user_id) + '_style.jpg'
+		output_path = str(user_id) + '_output.jpg'
+
+		for p in [content_path, style_path, output_path]:
+			os.remove(p)
 
 
 @dp.message_handler(state="*", content_types=ContentType.ANY)
