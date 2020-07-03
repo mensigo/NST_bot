@@ -16,8 +16,8 @@ from model.losses import *
 
 
 # basic constaints
-IMG_SIZE = 300
-ITER_NUM = 300 
+IMG_SIZE = 256
+ITER_NUM = 100 
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 STYLE_WEIGHT = 1e5
 TV_WEIGHT = 5e-6
@@ -87,7 +87,7 @@ def get_model_and_losses(image_loader,
 	                     style_layers):
     
     cnn = Model_vgg19_cut()
-    cnn.load_state_dict(torch.load(VGG19_W_PATH))
+    cnn.load_state_dict(torch.load(VGG19_W_PATH, map_location=DEVICE))
     model = nn.Sequential()
 
     content_losses = []
@@ -204,7 +204,7 @@ async def apply_NST(content_path, style_path, save_path, style_weight):
 	                                style_loss_weights=STYLE_LOSS_WEIGHTS,
 		                            style_weight=style_weight,
 		                            content_weight=1,
-		                            tv_weight=TV_WEIGHT
+		                            tv_weight=TV_WEIGHT,
 		                            print_flg=True)
 
 	tensor2PIL(output_img, VGG_MEAN, VGG_STD).save(save_path)
