@@ -26,6 +26,6 @@ Commands:
 /help - about me & procedure
 
 Details:<br>
-- images are resized to 256 (larger side) if necessary
+- images are resized to 200 (larger side) if necessary
 - gan resizes to a 256 square
 - gan inference time includes downloading weights (40+ mb)
