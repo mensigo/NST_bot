@@ -114,6 +114,7 @@ def get_model_and_losses(image_loader,
             model.add_module('style_loss_{}'.format(name[-3]), style_loss)
             style_losses.append(style_loss)
 
+    del cnn
     model.eval()
     return model, style_losses, content_losses
 

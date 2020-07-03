@@ -7,11 +7,18 @@ from aiogram.types.message import ContentType
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters.state import State, StatesGroup
 
-from config import API_TOKEN, PROXY_URL, PROXY_AUTH
+from config import (API_TOKEN, PROXY_URL, PROXY_AUTH,
+				   WEBHOOK_HOST, WEBHOOK_PATH)
 from model.image_loader import *
 from model.losses import *
 from model.model import *
 
+WEBHOOK_USAGE_FLG = True
+
+# webhook settings
+WEBHOOK_URL = f"{WEBHOOK_HOST}{WEBHOOK_PATH}"
+WEBAPP_HOST = '0.0.0.0'
+WEBAPP_PORT = 22
 
 logging.basicConfig(level=logging.INFO)
 bot = Bot(token=API_TOKEN, proxy=PROXY_URL, proxy_auth=PROXY_AUTH)
@@ -67,7 +74,7 @@ async def handler_command_help(message: types.Message):
 		- if you change your mind and want to start over (at any time),
 		  enter /stopit
 
-		ps. I can\'t handle pics with the largest side bigger than 300 pix
+		ps. I can\'t handle pics with the largest side bigger than 256 pix
 			(it will be resized automatically)
 
 		[made by @mensigo]
@@ -241,11 +248,38 @@ async def handler_other_msg(message: types.Message):
 	return await message.answer('Incorrect action. Enter /help')
 
 
+async def startup(dp: Dispatcher):
+	logging.warning('Starting..')
+    await bot.set_webhook(WEBHOOK_URL)
+
+
 async def shutdown(dp: Dispatcher):
+
+	# just in case, remove excess images
+	for fname in os.listdir():
+		if fname.endswith('.jpg'):
+			os.remove(fname)
 	await dp.storage.close()
 	await dp.storage.wait_closed()
+	logging.warning('Bye!')
 
 
 if __name__ == '__main__':
 
-	executor.start_polling(dp, skip_updates=True, on_shutdown=shutdown)
+	if (WEBHOOK_USAGE_FLG):
+		executor.start_webhook(
+			dispatcher=dp,
+			webhook_path=WEBHOOK_PATH,
+			on_startup=startup,
+			on_shutdown=shutdown,
+			skip_updates=False,
+			host=WEBAPP_HOST,
+			port=WEBAPP_PORT,
+		)
+	else:
+		executor.start_polling(
+			dispatcher=dp,
+			skip_updates=False,
+			on_startup=startup,
+			on_shutdown=shutdown
+			)
