@@ -95,7 +95,6 @@ async def handler_command_stopit(message: types.Message, state: FSMContext):
 	await message.answer('All right, let\'s try again from the very beginning. \nEnter /help',
 						 reply_markup=types.ReplyKeyboardRemove())
 
-
 ######################################
 
 
@@ -233,7 +232,6 @@ async def handler_run_same(message: types.Message, state: FSMContext):
 		await message.answer('Choose new intensity.', reply_markup=markup)
 
 	else:
-
 		# finish
 
 		logging.info('Finished.')
@@ -304,7 +302,6 @@ async def handler_content_ukiyoe(message: types.Message, state: FSMContext):
 	logging.info('Finished.')
 	await state.finish()
 	await message.answer('So.. you can /run whenever you want c;')
-
 
 ######################################
 
