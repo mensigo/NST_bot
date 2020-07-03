@@ -92,7 +92,7 @@ async def handler_command_stopit(message: types.Message, state: FSMContext):
 
 	logging.info('State is reset.')
 	await state.finish()
-	await message.answer('All right, let\'s try again from the very beginning. \nEnter /run',
+	await message.answer('All right, let\'s try again from the very beginning. \nEnter /help',
 						 reply_markup=types.ReplyKeyboardRemove())
 
 
