@@ -92,6 +92,10 @@ async def handler_command_stopit(message: types.Message, state: FSMContext):
 
 	logging.info('State is reset.')
 	await state.finish()
+	# pack of users can steal memory by uploading and /stopit
+	for fname in os.listdir():
+		if (fname.endswith('.jpg') or fname.endswith('.png')):
+			os.remove(fname)
 	await message.answer('All right, let\'s try again from the very beginning. \nEnter /help',
 						 reply_markup=types.ReplyKeyboardRemove())
 
