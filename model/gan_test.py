@@ -18,7 +18,11 @@ async def apply_GAN(content_path, save_path):
     pathlib.Path(CONTENT_FOLDER_PATH).mkdir(parents=True, exist_ok=True)
     shutil.move(content_path, os.path.join(CONTENT_FOLDER_PATH, 'content.jpg'))
 
-    # weights are predownloaded by a script
+    # download weights due to memory limits for /run
+    os.makedirs(WEIGHTS_PATH + 'style_ukiyoe_pretrained', exist_ok=True)
+    weights_fname = WEIGHTS_PATH + '/style_ukiyoe_pretrained/latest_net_G.pth'
+    weights_url = 'http://efrosgans.eecs.berkeley.edu/cyclegan/pretrained_models/style_ukiyoe.pth'
+    os.system(f'wget -N {weights_url} -O {weights_fname}')
 
     # inference
     command = f'python {INFERENCE_FILE_PATH}'
@@ -33,6 +37,7 @@ async def apply_GAN(content_path, save_path):
     # move result image back home
     shutil.move(os.path.join(OUTPUT_FOLDER_PATH, 'content_fake.png'), save_path)
 
-    # delete content & result data
+    # delete content & result data, weights
     os.remove(os.path.join(CONTENT_FOLDER_PATH, 'content.jpg'))
     shutil.rmtree(RESULTS_PATH)
+    os.remove(weights_fname)

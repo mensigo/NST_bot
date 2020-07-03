@@ -295,14 +295,12 @@ async def handler_content_ukiyoe(message: types.Message, state: FSMContext):
 	logging.info('Waiting state is set.')
 	await UkiyoeStates.waiting.set()
 	await state.update_data(content_id=message.photo[-1].file_id)
-	await message.answer('All right. Now wait a minute..')
+	await message.answer('All right. Now wait a bit..')
 	await types.ChatActions.typing()
 
 	input_data = await state.get_data()
 	await get_output_ukiyoe(input_data, message)
 
-	# run with same photos
-	
 	logging.info('Finished.')
 	await state.finish()
 	await message.answer('So.. you can /run whenever you want c;')
@@ -319,7 +317,8 @@ async def handler_other_msg(message: types.Message):
 
 async def startup(dp: Dispatcher):
 	logging.warning('Starting..')
-	await bot.set_webhook(WEBHOOK_URL)
+	if (WEBHOOK_USAGE_FLG):
+		await bot.set_webhook(WEBHOOK_URL)
 
 
 async def shutdown(dp: Dispatcher):
