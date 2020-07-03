@@ -16,7 +16,7 @@ from model.losses import *
 
 
 # basic constaints
-IMG_SIZE = 256
+IMG_SIZE = 200
 ITER_NUM = 100 
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 STYLE_WEIGHT = 1e5
