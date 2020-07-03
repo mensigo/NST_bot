@@ -95,7 +95,6 @@ async def handler_command_stopit(message: types.Message, state: FSMContext):
 	await message.answer('All right, let\'s try again from the very beginning. \nEnter /help',
 						 reply_markup=types.ReplyKeyboardRemove())
 
-
 ######################################
 
 
@@ -305,7 +304,6 @@ async def handler_content_ukiyoe(message: types.Message, state: FSMContext):
 	await state.finish()
 	await message.answer('So.. you can /run whenever you want c;')
 
-
 ######################################
 
 
@@ -350,4 +348,4 @@ if __name__ == '__main__':
 			skip_updates=False,
 			on_startup=startup,
 			on_shutdown=shutdown
-			)
+		)

@@ -14,7 +14,7 @@ NAME = 'style_ukiyoe_pretrained'
 
 async def apply_GAN(content_path, save_path):
 
-	# move content image to the special dir
+    # move content image to the special dir
     pathlib.Path(CONTENT_FOLDER_PATH).mkdir(parents=True, exist_ok=True)
     shutil.move(content_path, os.path.join(CONTENT_FOLDER_PATH, 'content.jpg'))
 
@@ -32,6 +32,7 @@ async def apply_GAN(content_path, save_path):
     command += f' --name {NAME}'
     command += f' --model test'
     command += f' --no_dropout'
+    command += f' --gpu_ids -1'
     os.system(command)
 
     # move result image back home

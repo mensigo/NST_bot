@@ -82,9 +82,9 @@ class Model_vgg19_cut(nn.Module):
 
 
 def get_model_and_losses(image_loader,
-	                     style_num,
-	                     content_layers,
-	                     style_layers):
+                         style_num,
+                         content_layers,
+                         style_layers):
     
     cnn = Model_vgg19_cut()
     cnn.load_state_dict(torch.load(VGG19_W_PATH, map_location=DEVICE))
@@ -132,8 +132,8 @@ def run_style_transfer(image_loader,
                        print_flg):
     
     if (print_flg):
-    	start_time = time.time()
-    	print('Building the style transfer model..')
+        start_time = time.time()
+        print('Building the style transfer model..')
 
     model, style_losses, content_losses = \
         get_model_and_losses(
@@ -192,21 +192,21 @@ def run_style_transfer(image_loader,
 
 async def apply_NST(content_path, style_path, save_path, style_weight):
 
-	image_loader = Image_loader([content_path], [style_path],
-								IMG_SIZE, DEVICE, VGG_MEAN, VGG_STD, True)
-	input_img = image_loader.get_content()
+    image_loader = Image_loader([content_path], [style_path],
+                                IMG_SIZE, DEVICE, VGG_MEAN, VGG_STD, True)
+    input_img = image_loader.get_content()
 
-	output_img = run_style_transfer(image_loader=image_loader,
-		                            input_img=input_img,
-	                                style_num=0,
-		                            num_steps=ITER_NUM,
-		                            content_layers=CONTENT_LAYERS,
-		                            style_layers=STYLE_LAYERS,
-	                                style_loss_weights=STYLE_LOSS_WEIGHTS,
-		                            style_weight=style_weight,
-		                            content_weight=1,
-		                            tv_weight=TV_WEIGHT,
-		                            print_flg=True)
+    output_img = run_style_transfer(image_loader=image_loader,
+                                    input_img=input_img,
+                                    style_num=0,
+                                    num_steps=ITER_NUM,
+                                    content_layers=CONTENT_LAYERS,
+                                    style_layers=STYLE_LAYERS,
+                                    style_loss_weights=STYLE_LOSS_WEIGHTS,
+                                    style_weight=style_weight,
+                                    content_weight=1,
+                                    tv_weight=TV_WEIGHT,
+                                    print_flg=True)
 
 	tensor2PIL(output_img, VGG_MEAN, VGG_STD).save(save_path)
 
@@ -220,7 +220,7 @@ if __name__ == '__main__':
     test_style_path = '../test_style.jpg'
     test_output_path = '../test_result.jpg'
     image_loader = Image_loader([test_content_path], [test_style_path],
-    							IMG_SIZE, DEVICE, VGG_MEAN, VGG_STD, True)
+                                IMG_SIZE, DEVICE, VGG_MEAN, VGG_STD, True)
     input_img = image_loader.get_content().clone()
     
     output_img = run_style_transfer(image_loader=image_loader,
@@ -228,7 +228,7 @@ if __name__ == '__main__':
                                     style_num=0,
                                     num_steps=ITER_NUM,
                                     content_layers=CONTENT_LAYERS,
-		                            style_layers=STYLE_LAYERS,
+                                    style_layers=STYLE_LAYERS,
                                     style_loss_weights=STYLE_LOSS_WEIGHTS,
                                     style_weight=STYLE_WEIGHT,
                                     content_weight=1,
