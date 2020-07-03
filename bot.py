@@ -12,8 +12,9 @@ from config import (API_TOKEN, PROXY_URL, PROXY_AUTH,
 from model.image_loader import *
 from model.losses import *
 from model.model import *
+from model.gan_test import *
 
-WEBHOOK_USAGE_FLG = True
+WEBHOOK_USAGE_FLG = False
 PROXY_USAGE_FLG = True
 
 logging.basicConfig(level=logging.INFO)
@@ -28,12 +29,15 @@ class RunStates(StatesGroup):
     waiting = State()
     run_same = State()
 
+class UkiyoeStates(StatesGroup):
+	content = State()
+	waiting = State()
 
 ######################################
 ##      Basic message handlers      ##
 ######################################
 
-@dp.message_handler(commands=['start'], state=None)
+@dp.message_handler(commands=['start'], state='*')
 async def handler_command_start(message: types.Message):
     
 	msg = \
@@ -43,7 +47,9 @@ async def handler_command_start(message: types.Message):
 		picture to another1 (i know you got them c;)
 		So here are the magic words to communicate w/ me:
 
-		/run - get instructions to do style transfer
+		/run - get instructions to do style transfer (your style)
+
+		/ukiyoe - same but fixed (ukiyoe) style
 
 		/stopit - return to the starting point
 
@@ -66,8 +72,10 @@ async def handler_command_help(message: types.Message):
 		  d) wait while I'll be working hard (approx. a minute)
 		  e) enjoy result image (I'll send)
 
-		- if you want to perform something beautiful, enter /run and
-		  follow my orders
+		Also there is an option for transferring ukiyoe style (/ukiyoe).
+
+		- if you want to perform something beautiful, enter /run or /ukiyoe
+		  and follow my orders
 		- if you change your mind and want to start over (at any time),
 		  enter /stopit
 
@@ -86,6 +94,9 @@ async def handler_command_stopit(message: types.Message, state: FSMContext):
 	await state.finish()
 	await message.answer('All right, let\'s try again from the very beginning. \nEnter /run',
 						 reply_markup=types.ReplyKeyboardRemove())
+
+
+######################################
 
 
 @dp.message_handler(commands=['run'], state=None)
@@ -239,6 +250,67 @@ async def handler_run_same(message: types.Message, state: FSMContext):
 			os.remove(p)
 
 
+######################################
+##          Ukiyoe transfer         ##
+######################################
+
+@dp.message_handler(commands=['ukiyoe'], state='*')
+async def handler_command_ukiyoe(message: types.Message):
+
+	msg = \
+		'''
+		Send me content image to transfer style on.
+		(a squared image would be perfect)
+		'''.replace('\t','')
+	logging.info('Content state is set.')
+	await UkiyoeStates.content.set()
+	await message.answer(msg)
+
+
+@dp.message_handler(lambda message: message.content_type != ContentType.PHOTO,
+					state=UkiyoeStates.content)
+async def handler_content_ukiyoe_invalid(message: types.Message, state: FSMContext):
+
+	msg = 'I can\'t read it, send content image pls.'
+	return await message.reply(msg)
+
+
+async def get_output_ukiyoe(input_data, message: types.Message):
+
+	user_id = message.from_user.id
+	content_path = str(user_id) + '_content.jpg'
+	output_path = str(user_id) + '_output.png'
+
+	await bot.download_file_by_id(input_data['content_id'], destination=content_path)
+	await apply_GAN(content_path, output_path)
+
+	with open(output_path, 'rb') as output_img:
+		await message.answer_photo(output_img, caption='Awesome1\n')
+	os.remove(output_path)
+
+
+@dp.message_handler(state=UkiyoeStates.content, content_types=ContentType.PHOTO)
+async def handler_content_ukiyoe(message: types.Message, state: FSMContext):
+
+	logging.info('Waiting state is set.')
+	await UkiyoeStates.waiting.set()
+	await state.update_data(content_id=message.photo[-1].file_id)
+	await message.answer('All right. Now wait a minute..')
+	await types.ChatActions.typing()
+
+	input_data = await state.get_data()
+	await get_output_ukiyoe(input_data, message)
+
+	# run with same photos
+	
+	logging.info('Finished.')
+	await state.finish()
+	await message.answer('So.. you can /run whenever you want c;')
+
+
+######################################
+
+
 @dp.message_handler(state="*", content_types=ContentType.ANY)
 async def handler_other_msg(message: types.Message):
 
@@ -254,7 +326,7 @@ async def shutdown(dp: Dispatcher):
 
 	# just in case, remove excess images
 	for fname in os.listdir():
-		if fname.endswith('.jpg'):
+		if (fname.endswith('.jpg') or fname.endswith('.png')):
 			os.remove(fname)
 	await dp.storage.close()
 	await dp.storage.wait_closed()
