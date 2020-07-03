@@ -79,7 +79,7 @@ async def handler_command_help(message: types.Message):
 		- if you change your mind and want to start over (at any time),
 		  enter /stopit
 
-		ps. I can\'t handle pics with the largest side bigger than 256 pix
+		ps. I can\'t handle pics with the largest side bigger than 200 pix
 			(it will be resized automatically)
 
 		[made by @mensigo]
@@ -240,7 +240,7 @@ async def handler_run_same(message: types.Message, state: FSMContext):
 
 		logging.info('Finished.')
 		await state.finish()
-		await message.answer('Ok, you can /run whenever you want c;',
+		await message.answer('Ok, you can /run or /ukiyoe whenever you want c;',
 							 reply_markup=types.ReplyKeyboardRemove())
 
 		user_id = message.from_user.id
@@ -305,7 +305,7 @@ async def handler_content_ukiyoe(message: types.Message, state: FSMContext):
 
 	logging.info('Finished.')
 	await state.finish()
-	await message.answer('So.. you can /run whenever you want c;')
+	await message.answer('So.. you can /run or /ukiyoe whenever you want c;')
 
 ######################################
 
