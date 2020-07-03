@@ -232,7 +232,6 @@ async def handler_run_same(message: types.Message, state: FSMContext):
 		await message.answer('Choose new intensity.', reply_markup=markup)
 
 	else:
-
 		# finish
 
 		logging.info('Finished.')
