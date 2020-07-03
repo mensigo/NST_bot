@@ -8,20 +8,17 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters.state import State, StatesGroup
 
 from config import (API_TOKEN, PROXY_URL, PROXY_AUTH,
-				   WEBHOOK_HOST, WEBHOOK_PATH)
+				   WEBHOOK_URL, WEBAPP_HOST, WEBAPP_PORT)
 from model.image_loader import *
 from model.losses import *
 from model.model import *
 
 WEBHOOK_USAGE_FLG = True
-
-# webhook settings
-WEBHOOK_URL = f"{WEBHOOK_HOST}{WEBHOOK_PATH}"
-WEBAPP_HOST = '0.0.0.0'
-WEBAPP_PORT = 22
+PROXY_USAGE_FLG = True
 
 logging.basicConfig(level=logging.INFO)
-bot = Bot(token=API_TOKEN, proxy=PROXY_URL, proxy_auth=PROXY_AUTH)
+bot = Bot(token=API_TOKEN) if not PROXY_USAGE_FLG \
+	  else Bot(token=API_TOKEN, proxy=PROXY_URL, proxy_auth=PROXY_AUTH)
 dp = Dispatcher(bot, storage=MemoryStorage())
 
 class RunStates(StatesGroup):
@@ -250,7 +247,7 @@ async def handler_other_msg(message: types.Message):
 
 async def startup(dp: Dispatcher):
 	logging.warning('Starting..')
-    await bot.set_webhook(WEBHOOK_URL)
+	await bot.set_webhook(WEBHOOK_URL)
 
 
 async def shutdown(dp: Dispatcher):
