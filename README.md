@@ -9,16 +9,16 @@ Algorithm: 1) standard, vgg-19 based, cut version
 Commands:
 
 /run - get instructions to do style transfer (your style):<br>
-  a) enter /run<br>
-  b) send photo to transfer style on \[content photo\]<br>
-  c) send photo to get style from \[style photo\]<br>
-  d) wait ~90 sec<br>
-  e) receive result image<br>
+  1) enter /run<br>
+  2) send photo to transfer style on \[content photo\]<br>
+  3) send photo to get style from \[style photo\]<br>
+  4) wait ~90 sec<br>
+  5) receive result image<br>
   
 /ukiyoe - same but fixed (ukiyoe) style:<br>
-  a) enter /ukiyoe<br>
-  b) send photo to transfer style on \[content photo\]<br>
-  c) wait ~7 sec<br>
+  1) enter /ukiyoe<br>
+  2) send photo to transfer style on \[content photo\]<br>
+  3) wait ~7 sec<br>
 
 /stopit - return to the starting point (reset state)<br>
 /help - about me & procedure
