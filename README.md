@@ -1,6 +1,6 @@
 ## Neural Style Transfer
 
-Platform: Telegram @LonAloneBot<br>
+Platform: Telegram @LonAloneBot [off]<br>
 Framework: aiogram<br>
 Algorithm:
 1) standard, vgg-19 based, cut version |
