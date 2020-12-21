@@ -7,8 +7,9 @@ from aiogram.types.message import ContentType
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from aiogram.dispatcher.filters.state import State, StatesGroup
 
-from config import (API_TOKEN, PROXY_URL, PROXY_AUTH,
-				   WEBHOOK_URL, WEBAPP_HOST, WEBAPP_PORT)
+from config import (API_TOKEN, PROXY_URL, PROXY_AUTH)
+from config import (WEBHOOK_URL, WEBAPP_HOST, WEBAPP_PORT)
+
 from model.image_loader import *
 from model.losses import *
 from model.model import *
@@ -18,8 +19,10 @@ WEBHOOK_USAGE_FLG = False
 PROXY_USAGE_FLG = True
 
 logging.basicConfig(level=logging.INFO)
-bot = Bot(token=API_TOKEN) if not PROXY_USAGE_FLG \
-	  else Bot(token=API_TOKEN, proxy=PROXY_URL, proxy_auth=PROXY_AUTH)
+if PROXY_USAGE_FLG:
+	bot = Bot(token=API_TOKEN, proxy=PROXY_URL, proxy_auth=PROXY_AUTH)
+else:
+	bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot, storage=MemoryStorage())
 
 class RunStates(StatesGroup):
@@ -33,13 +36,13 @@ class UkiyoeStates(StatesGroup):
 	content = State()
 	waiting = State()
 
+
 ######################################
 ##      Basic message handlers      ##
 ######################################
 
 @dp.message_handler(commands=['start'], state='*')
 async def handler_command_start(message: types.Message):
-    
 	msg = \
 		'''
 		Greetings1
@@ -61,7 +64,6 @@ async def handler_command_start(message: types.Message):
 
 @dp.message_handler(commands=['help'], state="*")
 async def handler_command_help(message: types.Message):
-
 	msg = \
 		'''	
 		I'm a bot designed to transfer artistic styles from style photos
@@ -89,46 +91,42 @@ async def handler_command_help(message: types.Message):
 
 @dp.message_handler(commands=['stopit'], state='*')
 async def handler_command_stopit(message: types.Message, state: FSMContext):
-
 	logging.info('State is reset.')
 	await state.finish()
-	# pack of users can steal memory by uploading and /stopit
+	# users can steal memory by uploading and /stopit
 	for fname in os.listdir():
 		if (fname.endswith('.jpg') or fname.endswith('.png')):
 			os.remove(fname)
-	await message.answer('All right, let\'s try again from the very beginning. \nEnter /help',
-						 reply_markup=types.ReplyKeyboardRemove())
+	await message.answer(
+		'All right, let\'s try again from the very beginning. \nEnter /help',
+		reply_markup=types.ReplyKeyboardRemove()
+	)
 
+######################################
 ######################################
 
 
 @dp.message_handler(commands=['run'], state=None)
 async def handler_command_run(message: types.Message):
-
 	msg = 'First, give me content image to transfer style on.'
 	logging.info('Content state is set.')
 	await RunStates.content.set()
 	await message.answer(msg)
 
 
-@dp.message_handler(lambda message: message.content_type != ContentType.PHOTO,
-					state=RunStates.content)
+@dp.message_handler(lambda message: message.content_type != ContentType.PHOTO, state=RunStates.content)
 async def handler_content_invalid(message: types.Message, state: FSMContext):
-
 	msg = 'I can\'t read it, send content image pls.'
 	return await message.reply(msg)
 
-@dp.message_handler(lambda message: message.content_type != ContentType.PHOTO,
-					state=RunStates.style)
+@dp.message_handler(lambda message: message.content_type != ContentType.PHOTO, state=RunStates.style)
 async def handler_style_invalid(message: types.Message, state: FSMContext):
-
 	msg = 'I can\'t read it, send style image pls.'
 	return await message.reply(msg)
 
 
 @dp.message_handler(state=RunStates.content, content_types=ContentType.PHOTO)
 async def handler_content(message: types.Message, state: FSMContext):
-
 	logging.info('Style state is set.')
 	await RunStates.style.set()
 	await state.update_data(content_id=message.photo[-1].file_id)
@@ -137,14 +135,14 @@ async def handler_content(message: types.Message, state: FSMContext):
 
 @dp.message_handler(state=RunStates.style, content_types=ContentType.PHOTO)
 async def handler_style(message: types.Message, state: FSMContext):
-
 	logging.info('Intensity state is set.')
 	await RunStates.intensity.set()
 	await state.update_data(style_id=message.photo[-1].file_id)
-
-	markup = types.ReplyKeyboardMarkup(resize_keyboard=True,
-									   selective=True,
-									   one_time_keyboard=True)
+	markup = types.ReplyKeyboardMarkup(
+		resize_keyboard=True,
+		selective=True,
+		one_time_keyboard=True
+	)
 	markup.add('Light', 'Medium', 'Hard')
 	await message.answer('At last, choose style intensity.', reply_markup=markup)
 
@@ -154,30 +152,24 @@ async def handler_style(message: types.Message, state: FSMContext):
 ######################################
 
 async def get_output(input_data, message: types.Message):
-
 	user_id = message.from_user.id
 	content_path = str(user_id) + '_content.jpg'
 	style_path = str(user_id) + '_style.jpg'
 	output_path = str(user_id) + '_output.jpg'
-
 	await bot.download_file_by_id(input_data['content_id'], destination=content_path)
 	await bot.download_file_by_id(input_data['style_id'], destination=style_path)
 	await apply_NST(content_path, style_path, output_path, input_data['style_w'])
-
 	with open(output_path, 'rb') as output_img:
 		await message.answer_photo(output_img, caption='Ta-daa1\n')
 
 
-@dp.message_handler(lambda message: message.text not in ['Light', 'Medium', 'Hard'],
-					state=RunStates.intensity)
+@dp.message_handler(lambda message: message.text not in ['Light', 'Medium', 'Hard'], state=RunStates.intensity)
 async def handler_intensity_invalid(message: types.Message):
-
 	return await message.reply("Wrong option.\nChoose intensity from the keyboard below.")
 
 
 @dp.message_handler(state=RunStates.intensity)
 async def handler_intensity(message: types.Message, state: FSMContext):
-
 	if (message.text == 'Light'):
 		style_w = 1e5
 	elif (message.text == 'Medium'):
@@ -192,62 +184,54 @@ async def handler_intensity(message: types.Message, state: FSMContext):
 	logging.info('Intensity option is set to {} ({}).'.format(style_w, message.text))
 	markup = types.ReplyKeyboardRemove()
 	await state.update_data(style_w=style_w)
-	
 	logging.info('Waiting state is set.')
 	await RunStates.waiting.set()
 	await message.answer('All right. Now wait a minute..')
 	await types.ChatActions.typing()
-
 	input_data = await state.get_data()
 	await get_output(input_data, message)
-
 	# run with same photos
-	
 	logging.info('Run_same state is set.')
 	await RunStates.run_same.set()
-	markup = types.ReplyKeyboardMarkup(resize_keyboard=True,
-									   selective=True,
-									   one_time_keyboard=True)
+	markup = types.ReplyKeyboardMarkup(
+		resize_keyboard=True,
+		selective=True,
+		one_time_keyboard=True
+	)
 	markup.add('Yes!', 'Nope.')
-	await message.answer('Try another intensity with same images?',
-						 reply_markup=markup)
+	await message.answer('Try another intensity with same images?',  reply_markup=markup)
 
 
-@dp.message_handler(lambda message: message.text not in ['Yes!', 'Nope.'],
-					state=RunStates.run_same)
+@dp.message_handler(lambda message: message.text not in ['Yes!', 'Nope.'], state=RunStates.run_same)
 async def handler_run_same_invalid(message: types.Message, state: FSMContext):
-
 	return await message.reply("Wrong option.\nChoose from the keyboard below.")
 
 
 @dp.message_handler(state=RunStates.run_same)
 async def handler_run_same(message: types.Message, state: FSMContext):
-
 	if (message.text == 'Yes!'):
-
 		# change intensity
-
 		logging.info('Intensity state is set.')
 		await RunStates.intensity.set()
-		markup = types.ReplyKeyboardMarkup(resize_keyboard=True,
-										   selective=True,
-										   one_time_keyboard=True)
+		markup = types.ReplyKeyboardMarkup(
+			resize_keyboard=True,
+			selective=True,
+			one_time_keyboard=True
+		)
 		markup.add('Light', 'Medium', 'Hard')
 		await message.answer('Choose new intensity.', reply_markup=markup)
-
 	else:
 		# finish
-
 		logging.info('Finished.')
 		await state.finish()
-		await message.answer('Ok, you can /run or /ukiyoe whenever you want c;',
-							 reply_markup=types.ReplyKeyboardRemove())
-
+		await message.answer(
+			'Ok, you can /run or /ukiyoe whenever you want c;',
+			 reply_markup=types.ReplyKeyboardRemove()
+		)
 		user_id = message.from_user.id
 		content_path = str(user_id) + '_content.jpg'
 		style_path = str(user_id) + '_style.jpg'
 		output_path = str(user_id) + '_output.jpg'
-
 		for p in [content_path, style_path, output_path]:
 			os.remove(p)
 
@@ -258,7 +242,6 @@ async def handler_run_same(message: types.Message, state: FSMContext):
 
 @dp.message_handler(commands=['ukiyoe'], state='*')
 async def handler_command_ukiyoe(message: types.Message):
-
 	msg = \
 		'''
 		Send me content image to transfer style on.
@@ -269,23 +252,18 @@ async def handler_command_ukiyoe(message: types.Message):
 	await message.answer(msg)
 
 
-@dp.message_handler(lambda message: message.content_type != ContentType.PHOTO,
-					state=UkiyoeStates.content)
+@dp.message_handler(lambda message: message.content_type != ContentType.PHOTO, state=UkiyoeStates.content)
 async def handler_content_ukiyoe_invalid(message: types.Message, state: FSMContext):
-
 	msg = 'I can\'t read it, send content image pls.'
 	return await message.reply(msg)
 
 
 async def get_output_ukiyoe(input_data, message: types.Message):
-
 	user_id = message.from_user.id
 	content_path = str(user_id) + '_content.jpg'
 	output_path = str(user_id) + '_output.png'
-
 	await bot.download_file_by_id(input_data['content_id'], destination=content_path)
 	await apply_GAN(content_path, output_path)
-
 	with open(output_path, 'rb') as output_img:
 		await message.answer_photo(output_img, caption='Awesome1\n')
 	os.remove(output_path)
@@ -293,26 +271,23 @@ async def get_output_ukiyoe(input_data, message: types.Message):
 
 @dp.message_handler(state=UkiyoeStates.content, content_types=ContentType.PHOTO)
 async def handler_content_ukiyoe(message: types.Message, state: FSMContext):
-
 	logging.info('Waiting state is set.')
 	await UkiyoeStates.waiting.set()
 	await state.update_data(content_id=message.photo[-1].file_id)
 	await message.answer('All right. Now wait a bit..')
 	await types.ChatActions.typing()
-
 	input_data = await state.get_data()
 	await get_output_ukiyoe(input_data, message)
-
 	logging.info('Finished.')
 	await state.finish()
 	await message.answer('So.. you can /run or /ukiyoe whenever you want c;')
 
-######################################
 
+######################################
+######################################
 
 @dp.message_handler(state="*", content_types=ContentType.ANY)
 async def handler_other_msg(message: types.Message):
-
 	return await message.answer('Incorrect action. Enter /help')
 
 
@@ -323,8 +298,8 @@ async def startup(dp: Dispatcher):
 
 
 async def shutdown(dp: Dispatcher):
-
 	# just in case, remove excess images
+	# TODO: ensure it does not delete other users' data
 	for fname in os.listdir():
 		if (fname.endswith('.jpg') or fname.endswith('.png')):
 			os.remove(fname)
@@ -334,7 +309,6 @@ async def shutdown(dp: Dispatcher):
 
 
 if __name__ == '__main__':
-
 	if (WEBHOOK_USAGE_FLG):
 		executor.start_webhook(
 			dispatcher=dp,

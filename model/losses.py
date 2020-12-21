@@ -16,7 +16,6 @@ class ContentLoss(nn.Module):
 
 
 def gram_matrix(input):
-
     _, f_map_num, h, w = input.size()  # batch size(=1)        
     features = input.view(f_map_num, h * w)
     G = torch.mm(features, features.t())
@@ -37,6 +36,7 @@ class StyleLoss(nn.Module):
 
 
 def total_variation_loss(img):      
-        diff_h = ((img[:,:,1:,:] - img[:,:,:-1,:]) ** 2).sum()
-        diff_w = ((img[:,:,:,1:] - img[:,:,:,:-1]) ** 2).sum()    
+        diff_h = ((img[:, :, 1:, :] - img[:, :, :-1, :]) ** 2).sum()
+        diff_w = ((img[:, :, :, 1:] - img[:, :, :, :-1]) ** 2).sum()    
         return diff_h + diff_w
+
